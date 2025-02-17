@@ -1,428 +1,439 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Animated Tracery Grammar with Files</title>
     <script src="jquery-3.7.1.min.js"></script>
     <script src="tracery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #00957E;  /* Bright blue background */
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            overflow: hidden;
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #00957e; /* Bright blue background */
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        overflow: hidden;
+      }
+      #monitor-case {
+        background: #e0d9c9; /* Vintage computer beige */
+        padding: 40px;
+        border-radius: 30px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2),
+          0 0 20px rgba(0, 0, 0, 0.4);
+        position: relative;
+        transform: perspective(1000px) rotateX(2deg);
+      }
+      #monitor-frame {
+        background: #d4cdc1; /* Slightly darker beige for inner frame */
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+      }
+      #canvas-container {
+        width: 80vw;
+        height: 80vh;
+        position: relative;
+        border: 2px solid #a39e93; /* Muted beige for border */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3),
+          0 0 5px rgba(255, 255, 255, 0.1);
+        background: rgb(35, 91, 171);
+        position: relative;
+      }
+      #canvas-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+            circle at center,
+            transparent 0%,
+            rgba(0, 0, 0, 0.1) 100%
+          ),
+          linear-gradient(
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(0, 0, 0, 0.1) 50%,
+            rgba(0, 0, 0, 0.1) 100%
+          );
+        background-size: 100% 2px;
+        border-radius: 15px;
+        pointer-events: none;
+        opacity: 0.15;
+        z-index: 2;
+      }
+      #screen-curve {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 15px;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(0, 0, 0, 0.1) 90%
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+      #canvas-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0.1) 50%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.1) 100%
+        );
+        background-size: 100% 2px;
+        pointer-events: none;
+        opacity: 0.1;
+        z-index: 2;
+      }
+      #power-light {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        width: 8px;
+        height: 8px;
+        background: #33ff33;
+        border-radius: 50%;
+        box-shadow: 0 0 5px #33ff33;
+        animation: blink 2s infinite;
+      }
+      #credits-button {
+        position: fixed;
+        bottom: 15px;
+        left: 15px;
+        padding: 5px 10px;
+        background: #d4cdc1;
+        border: 2px solid #a39e93;
+        border-radius: 5px;
+        color: #333;
+        font-family: monospace;
+        cursor: pointer;
+        font-size: 12px;
+        box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.5),
+          0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+      #credits-button:hover {
+        background: #e0d9c9;
+      }
+      #credits-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #e0d9c9;
+        padding: 20px;
+        border: 2px solid #a39e93;
+        border-radius: 10px;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        font-family: monospace;
+        color: #333;
+        max-width: 80%;
+        text-align: center;
+      }
+      #modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+      #close-modal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 16px;
+        color: #333;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
-        #monitor-case {
-            background: #e0d9c9;  /* Vintage computer beige */
-            padding: 40px;
-            border-radius: 30px;
-            box-shadow: 
-                inset 0 0 10px rgba(0,0,0,0.2),
-                0 0 20px rgba(0,0,0,0.4);
-            position: relative;
-            transform: perspective(1000px) rotateX(2deg);
+        50% {
+          opacity: 0.7;
         }
-        #monitor-frame {
-            background: #d4cdc1;  /* Slightly darker beige for inner frame */
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 
-                inset 0 0 5px rgba(0,0,0,0.3);
-        }
-        #canvas-container {
-            width: 80vw;
-            height: 80vh;
-            position: relative;
-            border: 2px solid #a39e93;  /* Muted beige for border */
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 
-                inset 0 0 10px rgba(0,0,0,0.3),
-                0 0 5px rgba(255,255,255,0.1);
-            background: rgb(35, 91, 171);
-            position: relative;
-        }
-        #canvas-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(
-                    circle at center,
-                    transparent 0%,
-                    rgba(0,0,0,0.1) 100%
-                ),
-                linear-gradient(
-                    rgba(255,255,255,0.1) 0%,
-                    rgba(255,255,255,0.1) 50%,
-                    rgba(0,0,0,0.1) 50%,
-                    rgba(0,0,0,0.1) 100%
-                );
-            background-size: 100% 2px;
-            border-radius: 15px;
-            pointer-events: none;
-            opacity: 0.15;
-            z-index: 2;
-        }
-        #screen-curve {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: 15px;
-            background: radial-gradient(
-                circle at 50% 50%,
-                rgba(255,255,255,0) 0%,
-                rgba(0,0,0,0.1) 90%
-            );
-            pointer-events: none;
-            z-index: 1;
-        }
-        #canvas-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                linear-gradient(
-                    rgba(255,255,255,0.1) 0%,
-                    rgba(255,255,255,0.1) 50%,
-                    rgba(0,0,0,0.1) 50%,
-                    rgba(0,0,0,0.1) 100%
-                );
-            background-size: 100% 2px;
-            pointer-events: none;
-            opacity: 0.1;
-            z-index: 2;
-        }
-        #power-light {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            width: 8px;
-            height: 8px;
-            background: #33ff33;
-            border-radius: 50%;
-            box-shadow: 0 0 5px #33ff33;
-            animation: blink 2s infinite;
-        }
-        #credits-button {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            padding: 5px 10px;
-            background: #d4cdc1;
-            border: 2px solid #a39e93;
-            border-radius: 5px;
-            color: #333;
-            font-family: monospace;
-            cursor: pointer;
-            font-size: 12px;
-            box-shadow: 
-                inset 0 0 5px rgba(255,255,255,0.5),
-                0 2px 4px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-        #credits-button:hover {
-            background: #e0d9c9;
-        }
-        #credits-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #e0d9c9;
-            padding: 20px;
-            border: 2px solid #a39e93;
-            border-radius: 10px;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            font-family: monospace;
-            color: #333;
-            max-width: 80%;
-            text-align: center;
-        }
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-        #close-modal {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 16px;
-            color: #333;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <button id="credits-button">Credits</button>
     <div id="monitor-case">
-        <div id="monitor-frame">
-            <div id="canvas-container">
-                <div id="screen-curve"></div>
-            </div>
+      <div id="monitor-frame">
+        <div id="canvas-container">
+          <div id="screen-curve"></div>
         </div>
-        <div id="power-light"></div>
+      </div>
+      <div id="power-light"></div>
     </div>
     <div id="modal-overlay"></div>
     <div id="credits-modal">
-        <button id="close-modal">×</button>
-        <p> Made by Devin Dennis. This text was generated using transcripts from the show Severance from this wiki page. <a href="https://severance.wiki/list_of_severance_episodes" target="_blank">https://severance.wiki/list_of_severance_episodes</a>.</p>
+      <button id="close-modal">×</button>
+      <p>
+        Made by Devin Dennis. This text was generated using transcripts from the
+        show Severance from this wiki page.
+        <a
+          href="https://severance.wiki/list_of_severance_episodes"
+          target="_blank"
+          >https://severance.wiki/list_of_severance_episodes</a
+        >. Licensed under CC BY-SA 4.0
+        (https://creativecommons.org/licenses/by-sa/4.0/).
+      </p>
     </div>
     <script>
-        const creditsButton = document.getElementById('credits-button');
-        const creditsModal = document.getElementById('credits-modal');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const closeModal = document.getElementById('close-modal');
+      const creditsButton = document.getElementById("credits-button");
+      const creditsModal = document.getElementById("credits-modal");
+      const modalOverlay = document.getElementById("modal-overlay");
+      const closeModal = document.getElementById("close-modal");
 
-        creditsButton.addEventListener('click', () => {
-            creditsModal.style.display = 'block';
-            modalOverlay.style.display = 'block';
-        });
+      creditsButton.addEventListener("click", () => {
+        creditsModal.style.display = "block";
+        modalOverlay.style.display = "block";
+      });
 
-        function hideModal() {
-            creditsModal.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+      function hideModal() {
+        creditsModal.style.display = "none";
+        modalOverlay.style.display = "none";
+      }
 
-        closeModal.addEventListener('click', hideModal);
-        modalOverlay.addEventListener('click', hideModal);
+      closeModal.addEventListener("click", hideModal);
+      modalOverlay.addEventListener("click", hideModal);
     </script>
     <script>
-        let textItems = [];
-        let files = [];
-        let grammar;
+      let textItems = [];
+      let files = [];
+      let grammar;
 
-        // Define size ranges for text
-        const sizeRanges = [
-            { min: 10, max: 20 },   // Small text
-            { min: 24, max: 36 },   // Medium text
-            { min: 42, max: 72 },   // Large text
-            { min: 80, max: 120 }   // Extra large text
-        ];
+      // Define size ranges for text
+      const sizeRanges = [
+        { min: 10, max: 20 }, // Small text
+        { min: 24, max: 36 }, // Medium text
+        { min: 42, max: 72 }, // Large text
+        { min: 80, max: 120 }, // Extra large text
+      ];
 
-        // Define color palette
-        const colors = [
-            [125, 161, 126],  // #7da17e - Sage green
-            [247, 246, 249],  // #f7f6f9 - Off white
-            [152, 182, 176],  // #98b6b0 - Soft teal
-            [22, 63, 56],     // #163f38 - Dark teal
-            [214, 224, 226]   // #d6e0e2 - Light gray blue
-        ];
+      // Define color palette
+      const colors = [
+        [125, 161, 126], // #7da17e - Sage green
+        [247, 246, 249], // #f7f6f9 - Off white
+        [152, 182, 176], // #98b6b0 - Soft teal
+        [22, 63, 56], // #163f38 - Dark teal
+        [214, 224, 226], // #d6e0e2 - Light gray blue
+      ];
 
-        class FloatingFile {
-            constructor(x, y) {
-                this.x = x || random(width);
-                this.y = y || random(height);
-                this.xSpeed = random(-2, 2);
-                this.ySpeed = random(-2, 2);
-                this.rotation = random(TWO_PI);
-                this.rotationSpeed = random(-0.02, 0.02);
-                this.size = random(30, 60);
-                this.opacity = 255;
-                this.fadeSpeed = random(0.5, 1.5);
-                const randomColor = random(colors);
-                this.r = randomColor[0];
-                this.g = randomColor[1];
-                this.b = randomColor[2];
-            }
-
-            move() {
-                this.x += this.xSpeed;
-                this.y += this.ySpeed;
-                this.rotation += this.rotationSpeed;
-                if (this.x < 0 || this.x > width) {
-                    this.xSpeed *= -1;
-                    this.x = constrain(this.x, 0, width);
-                }
-                if (this.y < 0 || this.y > height) {
-                    this.ySpeed *= -1;
-                    this.y = constrain(this.y, 0, height);
-                }
-                this.opacity -= this.fadeSpeed;
-            }
-
-            display() {
-                push();
-                translate(this.x, this.y);
-                rotate(this.rotation);
-                stroke(this.r, this.g, this.b, this.opacity);
-                noFill();
-                
-                // Draw file icon
-                rect(-15, -20, 30, 40);  // Main rectangle
-                rect(-10, -25, 20, 10);  // Top tab
-                
-                // File lines
-                line(-8, -5, 8, -5);
-                line(-8, 0, 8, 0);
-                line(-8, 5, 8, 5);
-                
-                pop();
-            }
-
-            isDead() {
-                return this.opacity <= 0;
-            }
+      class FloatingFile {
+        constructor(x, y) {
+          this.x = x || random(width);
+          this.y = y || random(height);
+          this.xSpeed = random(-2, 2);
+          this.ySpeed = random(-2, 2);
+          this.rotation = random(TWO_PI);
+          this.rotationSpeed = random(-0.02, 0.02);
+          this.size = random(30, 60);
+          this.opacity = 255;
+          this.fadeSpeed = random(0.5, 1.5);
+          const randomColor = random(colors);
+          this.r = randomColor[0];
+          this.g = randomColor[1];
+          this.b = randomColor[2];
         }
 
-        class FloatingText {
-            constructor(text, x, y) {
-                this.text = text;
-                this.x = x || random(width);
-                this.y = y || random(height);
-                this.xSpeed = random(-2, 2);
-                this.ySpeed = random(-2, 2);
-                
-                const sizeRange = random(sizeRanges);
-                this.size = random(sizeRange.min, sizeRange.max);
-                
-                this.opacity = 255;
-                this.fadeSpeed = random(0.5, 1.5);
-                
-                const randomColor = random(colors);
-                this.r = randomColor[0];
-                this.g = randomColor[1];
-                this.b = randomColor[2];
-            }
-
-            move() {
-                this.x += this.xSpeed;
-                this.y += this.ySpeed;
-                if (this.x < 0 || this.x > width) {
-                    this.xSpeed *= -1;
-                    this.x = constrain(this.x, 0, width);
-                }
-                if (this.y < 0 || this.y > height) {
-                    this.ySpeed *= -1;
-                    this.y = constrain(this.y, 0, height);
-                }
-                this.opacity -= this.fadeSpeed;
-            }
-
-            display() {
-                push();
-                textSize(this.size);
-                textAlign(CENTER, CENTER);
-                fill(this.r, this.g, this.b, this.opacity);
-                text(this.text, this.x, this.y);
-                pop();
-            }
-
-            isDead() {
-                return this.opacity <= 0;
-            }
+        move() {
+          this.x += this.xSpeed;
+          this.y += this.ySpeed;
+          this.rotation += this.rotationSpeed;
+          if (this.x < 0 || this.x > width) {
+            this.xSpeed *= -1;
+            this.x = constrain(this.x, 0, width);
+          }
+          if (this.y < 0 || this.y > height) {
+            this.ySpeed *= -1;
+            this.y = constrain(this.y, 0, height);
+          }
+          this.opacity -= this.fadeSpeed;
         }
 
-        function setup() {
-            let canvas = createCanvas(
-                document.getElementById('canvas-container').offsetWidth,
-                document.getElementById('canvas-container').offsetHeight
-            );
-            canvas.parent('canvas-container');
-            background(35, 91, 171);
-            
-            // Load the grammar file
-            $.ajax({
-                url: 'severance_tracery.json',
-                dataType: 'json',
-                success: function(loadedGrammar) {
-                    console.log('Grammar loaded successfully');
-                    grammar = tracery.createGrammar(loadedGrammar);
-                    grammar.addModifiers(tracery.baseEngModifiers);
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.log('Error loading grammar file');
-                }
-            });
+        display() {
+          push();
+          translate(this.x, this.y);
+          rotate(this.rotation);
+          stroke(this.r, this.g, this.b, this.opacity);
+          noFill();
+
+          // Draw file icon
+          rect(-15, -20, 30, 40); // Main rectangle
+          rect(-10, -25, 20, 10); // Top tab
+
+          // File lines
+          line(-8, -5, 8, -5);
+          line(-8, 0, 8, 0);
+          line(-8, 5, 8, 5);
+
+          pop();
         }
 
-        function draw() {
-            background(35, 91, 171);
+        isDead() {
+          return this.opacity <= 0;
+        }
+      }
 
-            // Generate new elements occasionally
-            if (frameCount % 60 === 0) {  // Every 60 frames (approximately 1 second)
-                files.push(new FloatingFile());
-                if (grammar) {
-                    let generatedText = grammar.flatten('#origin#');
-                    textItems.push(new FloatingText(generatedText));
-                }
-            }
+      class FloatingText {
+        constructor(text, x, y) {
+          this.text = text;
+          this.x = x || random(width);
+          this.y = y || random(height);
+          this.xSpeed = random(-2, 2);
+          this.ySpeed = random(-2, 2);
 
-            // Update and display files
-            for (let i = files.length - 1; i >= 0; i--) {
-                files[i].move();
-                files[i].display();
-                if (files[i].isDead()) {
-                    files.splice(i, 1);
-                }
-            }
+          const sizeRange = random(sizeRanges);
+          this.size = random(sizeRange.min, sizeRange.max);
 
-            // Update and display text items
-            for (let i = textItems.length - 1; i >= 0; i--) {
-                textItems[i].move();
-                textItems[i].display();
-                if (textItems[i].isDead()) {
-                    textItems.splice(i, 1);
-                }
-            }
+          this.opacity = 255;
+          this.fadeSpeed = random(0.5, 1.5);
+
+          const randomColor = random(colors);
+          this.r = randomColor[0];
+          this.g = randomColor[1];
+          this.b = randomColor[2];
         }
 
-        function mousePressed() {
-            let rect = document.getElementById('canvas-container').getBoundingClientRect();
-            let x = mouseX - rect.left;
-            let y = mouseY - rect.top;
-            
-            if (x >= 0 && x <= width && y >= 0 && y <= height) {
-                if (grammar) {
-                    let generatedText = grammar.flatten('#origin#');
-                    textItems.push(new FloatingText(generatedText, mouseX, mouseY));
-                    files.push(new FloatingFile(mouseX, mouseY));
-                }
-            }
+        move() {
+          this.x += this.xSpeed;
+          this.y += this.ySpeed;
+          if (this.x < 0 || this.x > width) {
+            this.xSpeed *= -1;
+            this.x = constrain(this.x, 0, width);
+          }
+          if (this.y < 0 || this.y > height) {
+            this.ySpeed *= -1;
+            this.y = constrain(this.y, 0, height);
+          }
+          this.opacity -= this.fadeSpeed;
         }
 
-        function windowResized() {
-            resizeCanvas(
-                document.getElementById('canvas-container').offsetWidth,
-                document.getElementById('canvas-container').offsetHeight
-            );
-            background(35, 91, 171);
+        display() {
+          push();
+          textSize(this.size);
+          textAlign(CENTER, CENTER);
+          fill(this.r, this.g, this.b, this.opacity);
+          text(this.text, this.x, this.y);
+          pop();
         }
+
+        isDead() {
+          return this.opacity <= 0;
+        }
+      }
+
+      function setup() {
+        let canvas = createCanvas(
+          document.getElementById("canvas-container").offsetWidth,
+          document.getElementById("canvas-container").offsetHeight
+        );
+        canvas.parent("canvas-container");
+        background(35, 91, 171);
+
+        // Load the grammar file
+        $.ajax({
+          url: "severance_tracery.json",
+          dataType: "json",
+          success: function (loadedGrammar) {
+            console.log("Grammar loaded successfully");
+            grammar = tracery.createGrammar(loadedGrammar);
+            grammar.addModifiers(tracery.baseEngModifiers);
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            console.log("Error loading grammar file");
+          },
+        });
+      }
+
+      function draw() {
+        background(35, 91, 171);
+
+        // Generate new elements occasionally
+        if (frameCount % 60 === 0) {
+          // Every 60 frames (approximately 1 second)
+          files.push(new FloatingFile());
+          if (grammar) {
+            let generatedText = grammar.flatten("#origin#");
+            textItems.push(new FloatingText(generatedText));
+          }
+        }
+
+        // Update and display files
+        for (let i = files.length - 1; i >= 0; i--) {
+          files[i].move();
+          files[i].display();
+          if (files[i].isDead()) {
+            files.splice(i, 1);
+          }
+        }
+
+        // Update and display text items
+        for (let i = textItems.length - 1; i >= 0; i--) {
+          textItems[i].move();
+          textItems[i].display();
+          if (textItems[i].isDead()) {
+            textItems.splice(i, 1);
+          }
+        }
+      }
+
+      function mousePressed() {
+        let rect = document
+          .getElementById("canvas-container")
+          .getBoundingClientRect();
+        let x = mouseX - rect.left;
+        let y = mouseY - rect.top;
+
+        if (x >= 0 && x <= width && y >= 0 && y <= height) {
+          if (grammar) {
+            let generatedText = grammar.flatten("#origin#");
+            textItems.push(new FloatingText(generatedText, mouseX, mouseY));
+            files.push(new FloatingFile(mouseX, mouseY));
+          }
+        }
+      }
+
+      function windowResized() {
+        resizeCanvas(
+          document.getElementById("canvas-container").offsetWidth,
+          document.getElementById("canvas-container").offsetHeight
+        );
+        background(35, 91, 171);
+      }
     </script>
-</body>
+  </body>
 </html>
